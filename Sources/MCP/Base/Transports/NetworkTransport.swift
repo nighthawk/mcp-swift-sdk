@@ -330,6 +330,7 @@ import Logging
                     case MCPError.internalError("Connection cancelled"): "cancellation"
                     default:                                             "failure"
                     }
+                    logger.info("Attempting reconnection after \(context) (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))...")
                     
                     guard !isStopping, reconnectionConfig.enabled, reconnectAttempt < reconnectionConfig.maxAttempts else {
                         // Not configured to reconnect, exceeded max attempts, or stopping
@@ -362,9 +363,17 @@ import Logging
         
         /// Waits for NWConnection to reach .ready or fail/cancel, once per call.
         private func waitForReady() async throws {
-            try await withCheckedThrowingContinuation { continuation in
+            try await withCheckedThrowingContinuation { [weak self]  (continuation: CheckedContinuation<Void, Swift.Error>) in
+                guard let self = self else {
+                    continuation.resume(throwing: MCPError.internalError("Transport deallocated"))
+                    return
+                }
+
                 connection.stateUpdateHandler = { [weak self] state in
-                    guard let self else { return }
+                    guard let self = self else {
+                        continuation.resume(throwing: MCPError.internalError("Transport deallocated"))
+                        return
+                    }
                     
                     switch state {
                     case .ready:
