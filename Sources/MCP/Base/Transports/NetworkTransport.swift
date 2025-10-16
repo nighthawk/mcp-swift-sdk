@@ -321,7 +321,7 @@ import Logging
                     // Reset reconnect attempt counter on successful connection
                     isConnected = true
                     reconnectAttempt = 0
-                    logger.info("Network transport connected successfully")
+                    logger.debug("Network transport connected successfully")
                     
                 } catch {
                     // Try to reconnect with exponential backoff
@@ -330,7 +330,7 @@ import Logging
                     case MCPError.internalError("Connection cancelled"): "cancellation"
                     default:                                             "failure"
                     }
-                    logger.info("Attempting reconnection after \(context) (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))...")
+                    logger.debug("Attempting reconnection after \(context) (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))...")
                     
                     guard !isStopping, reconnectionConfig.enabled, reconnectAttempt < reconnectionConfig.maxAttempts else {
                         // Not configured to reconnect, exceeded max attempts, or stopping
@@ -340,7 +340,7 @@ import Logging
                     
                     // Backoff before retry
                     let delay = reconnectionConfig.backoffDelay(for: reconnectAttempt)
-                    logger.info("Reconnection attempt \(reconnectAttempt)/\(reconnectionConfig.maxAttempts) after \(delay) seconds")
+                    logger.debug("Reconnection attempt \(reconnectAttempt)/\(reconnectionConfig.maxAttempts) after \(delay) seconds")
                     try? await Task.sleep(for: .seconds(delay))
                     if !isStopping {
                         // Cancel the current connection before attempting to reconnect.
